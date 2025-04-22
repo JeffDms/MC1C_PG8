@@ -1,0 +1,9 @@
+xml version=1.0 encoding=UTF-8
+instrucciones
+    tituloGuía para construir un Mapa de Karnaughtitulo
+    paso1. Selecciona la cantidad de variables (3 o 4).paso
+    paso2. Carga o escribe el archivo con los minitérminos separados por comas.paso
+    paso3. Haz clic en Procesar para generar la función booleana y su versión simplificada.paso
+    paso4. Haz clic en Ver K-Map para visualizar el mapa de Karnaugh.paso
+    paso5. Verifica que los minitérminos estén bien ubicados en el mapa (1 en la celda correspondiente).paso
+instrucciones
