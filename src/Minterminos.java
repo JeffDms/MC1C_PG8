@@ -8,267 +8,265 @@ import java.util.List;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 
-/**
- * 
- * Autor: Jeffrey Mejía
- * 
- */
 public class Minterminos {
     private JFrame ventana;
     private JTextArea areaResultado;
     private JComboBox<String> comboVariables;
-    private JTextField campoArchivo;
-    private JButton btnProcesar;
-    private JButton btnMostrarKmap;
-    private JButton btnVerInstrucciones;
-    private JLabel etiquetaAutor;
-    private List<Integer> listaMiniterminos = new ArrayList<>();
+    private JTextField campoArchivo, campoMiniterminoManual;
+    private DefaultListModel<Integer> modeloLista;
+    private JList<Integer> listaVisual;
+    private final List<Integer> miniterminos = new ArrayList<>();
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Minterminos().iniciarInterfaz());
+        SwingUtilities.invokeLater(() -> new Minterminos().crearInterfaz());
     }
 
-    public void iniciarInterfaz() {
+    private void crearInterfaz() {
         ventana = new JFrame("Generador de Función Booleana");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ventana.setSize(700, 500);
+        ventana.setSize(800, 600);
+        ventana.setLocationRelativeTo(null);
 
         JPanel panelPrincipal = new JPanel(new BorderLayout());
-        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelPrincipal.setBackground(new Color(240, 245, 255));
 
-        campoArchivo = new JTextField("miniterminos.txt", 20);
-        comboVariables = new JComboBox<>(new String[]{"3", "4"});
-        btnProcesar = new JButton("Procesar");
-        btnMostrarKmap = new JButton("Ver K-Map");
-        btnVerInstrucciones = new JButton("Ver Instrucciones");
-
-        btnProcesar.addActionListener(e -> procesarArchivo());
-        btnMostrarKmap.addActionListener(e -> mostrarKmap());
-        btnVerInstrucciones.addActionListener(e -> {
-            String instrucciones = leerInstruccionesDesdeXML("instrucciones.xml");
-            JTextArea textArea = new JTextArea(instrucciones);
-            textArea.setEditable(false);
-            textArea.setLineWrap(true);
-            textArea.setWrapStyleWord(true);
-            JScrollPane scrollPane = new JScrollPane(textArea);
-            scrollPane.setPreferredSize(new Dimension(400, 250));
-
-            JOptionPane.showMessageDialog(ventana, scrollPane, "Instrucciones", JOptionPane.INFORMATION_MESSAGE);
-        });
-
-        panelSuperior.add(new JLabel("Archivo:"));
-        panelSuperior.add(campoArchivo);
-        panelSuperior.add(new JLabel("Variables:"));
-        panelSuperior.add(comboVariables);
-        panelSuperior.add(btnProcesar);
-        panelSuperior.add(btnMostrarKmap);
-        panelSuperior.add(btnVerInstrucciones);
-
-        areaResultado = new JTextArea();
-        areaResultado.setEditable(false);
-        JScrollPane scrollResultado = new JScrollPane(areaResultado);
-
-        etiquetaAutor = new JLabel("Autores: Jeffrey Mejía y MaJo Montepeque", SwingConstants.CENTER);
-        etiquetaAutor.setFont(new Font("Arial", Font.ITALIC, 12));
-
-        panelPrincipal.add(panelSuperior, BorderLayout.NORTH);
-        panelPrincipal.add(scrollResultado, BorderLayout.CENTER);
-        panelPrincipal.add(etiquetaAutor, BorderLayout.SOUTH);
+        panelPrincipal.add(crearPanelSuperior(), BorderLayout.NORTH);
+        panelPrincipal.add(crearPanelMiniterminos(), BorderLayout.WEST);
+        panelPrincipal.add(crearPanelResultado(), BorderLayout.CENTER);
+        panelPrincipal.add(crearEtiquetaAutor(), BorderLayout.SOUTH);
 
         ventana.add(panelPrincipal);
         ventana.setVisible(true);
     }
 
-    private void procesarArchivo() {
-        String rutaArchivo = campoArchivo.getText();
-        int cantidadVariables = Integer.parseInt((String) comboVariables.getSelectedItem());
-        listaMiniterminos.clear();
+    private JPanel crearPanelSuperior() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.setBackground(new Color(200, 220, 255));
 
+        campoArchivo = new JTextField("miniterminos.txt", 15);
+        comboVariables = new JComboBox<>(new String[]{"3", "4"});
+        JButton btnProcesar = new JButton("Procesar");
+        JButton btnKMap = new JButton("Ver Mapa");
+        JButton btnInstrucciones = new JButton("Ver Instrucciones");
+
+        btnProcesar.addActionListener(e -> procesarMiniterminos());
+        btnKMap.addActionListener(e -> mostrarKmap());
+        btnInstrucciones.addActionListener(e -> mostrarInstrucciones());
+
+        //panel.add(new JLabel("Archivo:"));
+        //panel.add(campoArchivo);
+        panel.add(new JLabel("Variables:"));
+        panel.add(comboVariables);
+        panel.add(btnProcesar);
+        panel.add(btnKMap);
+        panel.add(btnInstrucciones);
+
+        return panel;
+    }
+
+    private JPanel crearPanelMiniterminos() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(220, 255, 240));
+
+        campoMiniterminoManual = new JTextField(5);
+        JButton btnAgregar = new JButton("Agregar");
+        JButton btnLimpiar = new JButton("Limpiar");
+
+        modeloLista = new DefaultListModel<>();
+        listaVisual = new JList<>(modeloLista);
+        listaVisual.setVisibleRowCount(15);
+
+        btnAgregar.addActionListener(e -> agregarMiniterminoManual());
+        btnLimpiar.addActionListener(e -> limpiarLista());
+
+        panel.add(new JLabel("Minitérmino:"));
+        panel.add(campoMiniterminoManual);
+        panel.add(btnAgregar);
+        panel.add(btnLimpiar);
+        panel.add(new JScrollPane(listaVisual));
+
+        return panel;
+    }
+
+    private JScrollPane crearPanelResultado() {
+        areaResultado = new JTextArea();
+        areaResultado.setEditable(true);
+        areaResultado.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        areaResultado.setBackground(new Color(245, 255, 250));
+        JScrollPane scroll = new JScrollPane(areaResultado);
+        scroll.setPreferredSize(new Dimension(150, 100)); 
+               return new JScrollPane(areaResultado);
+    }
+
+    private JLabel crearEtiquetaAutor() {
+        JLabel etiqueta = new JLabel("Autores: Jeffrey Mejía y MaJo Montepeque", SwingConstants.CENTER);
+        etiqueta.setFont(new Font("Arial", Font.ITALIC, 7));
+        etiqueta.setForeground(new Color(100, 100, 150));
+        return etiqueta;
+    }
+
+    private void agregarMiniterminoManual() {
         try {
-            String contenido = new String(java.nio.file.Files.readAllBytes(new File(rutaArchivo).toPath()));
-            String[] partes = contenido.split(",");
-            for (String parte : partes) {
-                listaMiniterminos.add(Integer.parseInt(parte.trim()));
+            int valor = Integer.parseInt(campoMiniterminoManual.getText().trim());
+            if (!miniterminos.contains(valor)) {
+                miniterminos.add(valor);
+                modeloLista.addElement(valor);
             }
-
-            areaResultado.setText("");
-            areaResultado.append("Minitérminos leídos: " + listaMiniterminos + "\n");
-            areaResultado.append("Función Booleana: " + generarFuncion(listaMiniterminos, cantidadVariables) + "\n");
-
-            QuineMcCluskey simplificador = new QuineMcCluskey(cantidadVariables, listaMiniterminos);
-            String resultadoSimplificado = simplificador.simplificar();
-            areaResultado.append("Función Simplificada: " + resultadoSimplificado + "\n");
-
-        } catch (IOException ex) {
-            areaResultado.setText("Error al leer el archivo: " + ex.getMessage());
-        } catch (NumberFormatException ex) {
-            areaResultado.setText("Error en el formato de los datos del archivo.");
+            campoMiniterminoManual.setText("");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(ventana, "Ingrese un número válido.");
         }
     }
 
-    private String generarFuncion(List<Integer> miniterminos, int variables) {
+    private void limpiarLista() {
+        miniterminos.clear();
+        modeloLista.clear();
+    }
+
+    private void procesarMiniterminos() {
+        String archivo = campoArchivo.getText().trim();
+        int vars = Integer.parseInt((String) comboVariables.getSelectedItem());
+
+        if (!archivo.isEmpty()) {
+            try {
+                String contenido = new String(java.nio.file.Files.readAllBytes(new File(archivo).toPath()));
+                for (String parte : contenido.split(",")) {
+                    int valor = Integer.parseInt(parte.trim());
+                    if (!miniterminos.contains(valor)) {
+                        miniterminos.add(valor);
+                        modeloLista.addElement(valor);
+                    }
+                }
+            } catch (IOException | NumberFormatException e) {
+                areaResultado.setText("Error al leer el archivo: " + e.getMessage());
+                return;
+            }
+        }
+
+        Collections.sort(miniterminos);
+        areaResultado.setText("");
+        areaResultado.append("Minitérminos: " + miniterminos + "\n");
+        areaResultado.append("Función Booleana: " + generarFuncion(miniterminos, vars) + "\n");
+
+        QuineMcCluskey qm = new QuineMcCluskey(vars, miniterminos);
+        String resultado = qm.simplificar();
+        areaResultado.append("Función Simplificada: " + resultado + "\n");
+    }
+
+    private String generarFuncion(List<Integer> minterms, int variables) {
         StringBuilder funcion = new StringBuilder();
 
-        for (int i = 0; i < miniterminos.size(); i++) {
-            int valor = miniterminos.get(i);
-            String binario = String.format("%" + variables + "s", Integer.toBinaryString(valor)).replace(' ', '0');
+        for (int i = 0; i < minterms.size(); i++) {
+            int val = minterms.get(i);
+            String bin = String.format("%" + variables + "s", Integer.toBinaryString(val)).replace(' ', '0');
             for (int j = 0; j < variables; j++) {
                 char letra = (char) ('A' + j);
-                funcion.append(binario.charAt(j) == '0' ? letra + "'" : letra);
+                funcion.append(bin.charAt(j) == '0' ? letra + "'" : letra);
             }
-            if (i < miniterminos.size() - 1) {
-                funcion.append(" + ");
-            }
+            if (i < minterms.size() - 1) funcion.append(" + ");
         }
         return funcion.toString();
     }
 
     private void mostrarKmap() {
-        int numVariables = Integer.parseInt((String) comboVariables.getSelectedItem());
-        JFrame ventanaMapa = new JFrame("Mapa de Karnaugh");
-        ventanaMapa.setSize(400, 300);
-        ventanaMapa.setLocationRelativeTo(ventana);
+        int vars = Integer.parseInt((String) comboVariables.getSelectedItem());
+        JFrame frame = new JFrame("Mapa de Karnaugh");
+        frame.setSize(400, 300);
+        frame.setLocationRelativeTo(ventana);
 
-        String[][] datosTabla;
-        String[] columnas;
-        String[] filas;
+        String[][] datos;
+        String[] col, fila;
         int[][] posiciones;
 
-        if (numVariables == 3) {
-            columnas = new String[]{"", "00", "01", "11", "10"};
-            filas = new String[]{"0", "1"};
-            datosTabla = new String[2][5];
+        if (vars == 3) {
+            col = new String[]{"", "00", "01", "11", "10"};
+            fila = new String[]{"0", "1"};
+            datos = new String[2][5];
             posiciones = new int[][]{{0, 1, 3, 2}, {4, 5, 7, 6}};
         } else {
-            columnas = new String[]{"", "00", "01", "11", "10"};
-            filas = new String[]{"00", "01", "11", "10"};
-            datosTabla = new String[4][5];
+            col = new String[]{"", "00", "01", "11", "10"};
+            fila = new String[]{"00", "01", "11", "10"};
+            datos = new String[4][5];
             posiciones = new int[][]{
-                {0, 1, 3, 2},
-                {4, 5, 7, 6},
-                {12, 13, 15, 14},
-                {8, 9, 11, 10}
+                {0, 1, 3, 2}, {4, 5, 7, 6}, {12, 13, 15, 14}, {8, 9, 11, 10}
             };
         }
 
-        for (int i = 0; i < datosTabla.length; i++) {
-            datosTabla[i][0] = filas[i];
-            for (int j = 0; j < columnas.length - 1; j++) {
-                int valor = posiciones[i][j];
-                datosTabla[i][j + 1] = listaMiniterminos.contains(valor) ? "1" : "0";
+        for (int i = 0; i < datos.length; i++) {
+            datos[i][0] = fila[i];
+            for (int j = 0; j < col.length - 1; j++) {
+                int val = posiciones[i][j];
+                datos[i][j + 1] = miniterminos.contains(val) ? "1" : "0";
             }
         }
 
-        JTable tabla = new JTable(datosTabla, columnas) {
-            public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
-                Component celda = super.prepareRenderer(renderer, row, col);
-                if (col == 0) {
-                    celda.setBackground(Color.LIGHT_GRAY);
-                    return celda;
-                }
-                celda.setBackground("1".equals(getValueAt(row, col)) ? new Color(173, 216, 230) : Color.WHITE);
-                return celda;
+        JTable tabla = new JTable(datos, col) {
+            public Component prepareRenderer(TableCellRenderer r, int row, int col) {
+                Component c = super.prepareRenderer(r, row, col);
+                c.setFont(new Font("Monospaced", Font.BOLD, 14));
+                c.setBackground(col == 0 ? new Color(200, 200, 255) :
+                        "1".equals(getValueAt(row, col)) ? new Color(173, 255, 181) : Color.WHITE);
+                return c;
             }
         };
 
         tabla.setEnabled(false);
         tabla.setRowHeight(30);
-        tabla.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        frame.add(new JScrollPane(tabla));
+        frame.setVisible(true);
+    }
 
-        JPanel panelMapa = new JPanel(new BorderLayout());
-        panelMapa.add(new JLabel(" "), BorderLayout.NORTH);
-        panelMapa.add(new JScrollPane(tabla), BorderLayout.CENTER);
-        ventanaMapa.add(panelMapa);
+    private void mostrarInstrucciones() {
+        String texto = leerInstruccionesDesdeXML("instrucciones.xml");
+        JTextArea area = new JTextArea(texto);
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
 
-        ventanaMapa.setVisible(true);
+        JScrollPane scroll = new JScrollPane(area);
+        scroll.setPreferredSize(new Dimension(400, 250));
+        JOptionPane.showMessageDialog(ventana, scroll, "Instrucciones", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private String leerInstruccionesDesdeXML(String archivoXML) {
-        StringBuilder instrucciones = new StringBuilder();
+        StringBuilder resultado = new StringBuilder();
         try {
-            File archivo = new File(archivoXML);
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(archivo);
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(archivoXML));
             doc.getDocumentElement().normalize();
 
-            NodeList listaPasos = doc.getElementsByTagName("paso");
-            for (int i = 0; i < listaPasos.getLength(); i++) {
-                instrucciones.append(listaPasos.item(i).getTextContent()).append("\n");
+            NodeList pasos = doc.getElementsByTagName("paso");
+            for (int i = 0; i < pasos.getLength(); i++) {
+                resultado.append(pasos.item(i).getTextContent()).append("\n");
             }
         } catch (Exception e) {
-            instrucciones.append("Error al leer instrucciones XML: ").append(e.getMessage());
-        }
-        return instrucciones.toString();
-    }
-}
-
-class QuineMcCluskey {
-    private int numVars;
-    private List<Integer> minterms;
-
-    public QuineMcCluskey(int numVars, List<Integer> minterms) {
-        this.numVars = numVars;
-        this.minterms = minterms;
-    }
-
-    public String simplificar() {
-        Set<String> implicantes = new HashSet<>();
-        for (int m : minterms) {
-            implicantes.add(String.format("%" + numVars + "s", Integer.toBinaryString(m)).replace(' ', '0'));
-        }
-
-        List<String> combinaciones = new ArrayList<>(implicantes);
-        List<String> resultado = combinar(combinaciones);
-
-        StringBuilder expresion = new StringBuilder();
-        for (int i = 0; i < resultado.size(); i++) {
-            expresion.append(convertirABooleana(resultado.get(i)));
-            if (i < resultado.size() - 1) expresion.append(" + ");
-        }
-        return expresion.toString();
-    }
-
-    private List<String> combinar(List<String> lista) {
-        List<String> resultado = new ArrayList<>();
-        Set<String> utilizados = new HashSet<>();
-
-        for (int i = 0; i < lista.size(); i++) {
-            for (int j = i + 1; j < lista.size(); j++) {
-                String a = lista.get(i);
-                String b = lista.get(j);
-                int diferencias = 0, posicion = -1;
-
-                for (int k = 0; k < a.length(); k++) {
-                    if (a.charAt(k) != b.charAt(k)) {
-                        diferencias++;
-                        posicion = k;
-                    }
-                }
-
-                if (diferencias == 1) {
-                    String combinado = a.substring(0, posicion) + "-" + a.substring(posicion + 1);
-                    resultado.add(combinado);
-                    utilizados.add(a);
-                    utilizados.add(b);
-                }
-            }
-        }
-
-        for (String s : lista) {
-            if (!utilizados.contains(s)) resultado.add(s);
-        }
-
-        return new ArrayList<>(new HashSet<>(resultado));
-    }
-
-    private String convertirABooleana(String binario) {
-        StringBuilder resultado = new StringBuilder();
-        for (int i = 0; i < binario.length(); i++) {
-            if (binario.charAt(i) == '-') continue;
-            char letra = (char) ('A' + i);
-            resultado.append(binario.charAt(i) == '0' ? letra + "'" : letra);
+            resultado.append("Error al leer instrucciones XML: ").append(e.getMessage());
         }
         return resultado.toString();
+    }
+
+    // Clase interna para simplificar funciones booleanas
+    static class QuineMcCluskey {
+        private final int numVariables;
+        private final List<Integer> minterms;
+
+        public QuineMcCluskey(int numVariables, List<Integer> minterms) {
+            this.numVariables = numVariables;
+            this.minterms = new ArrayList<>(minterms);
+        }
+
+        public String simplificar() {
+            Set<String> expresiones = new HashSet<>();
+            for (int minterm : minterms) {
+                String bin = String.format("%" + numVariables + "s", Integer.toBinaryString(minterm)).replace(' ', '0');
+                StringBuilder expresion = new StringBuilder();
+                for (int i = 0; i < numVariables; i++) {
+                    char var = (char) ('A' + i);
+                    expresion.append(bin.charAt(i) == '1' ? var : var + "'");
+                }
+                expresiones.add(expresion.toString());
+            }
+            return String.join(" + ", expresiones);
+        }
     }
 }
