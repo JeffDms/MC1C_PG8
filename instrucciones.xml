@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<instrucciones>
+    <paso>1. Seleccione la cantidad de variables (3 o 4).</paso>
+    <paso>2. Ingrese el nombre del archivo de texto con los minitérminos.</paso>
+    <paso>3. Presione "Procesar" para generar la función booleana.</paso>
+    <paso>4. Presione "Ver K-Map" para visualizar el mapa de Karnaugh.</paso>
+    <paso>5. Presione "Ver Instrucciones" para revisar esta guía.</paso>
+</instrucciones>
