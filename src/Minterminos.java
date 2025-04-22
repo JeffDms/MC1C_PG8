@@ -199,7 +199,8 @@ public class Minterminos {
             }
         }
 
-        JTable tabla = new JTable(datos, col) {
+        JTable tabla;
+        tabla = new JTable(datos, col) {
             public Component prepareRenderer(TableCellRenderer r, int row, int col) {
                 Component c = super.prepareRenderer(r, row, col);
                 c.setFont(new Font("Monospaced", Font.BOLD, 14));
@@ -242,8 +243,7 @@ public class Minterminos {
         }
         return resultado.toString();
     }
-
-    // Clase interna para simplificar funciones booleanas
+    
     static class QuineMcCluskey {
         private final int numVariables;
         private final List<Integer> minterms;
