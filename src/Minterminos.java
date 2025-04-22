@@ -5,6 +5,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import javax.xml.parsers.*;
+import org.w3c.dom.*;
 
 /**
  * 
@@ -18,6 +20,7 @@ public class Minterminos {
     private JTextField campoArchivo;
     private JButton btnProcesar;
     private JButton btnMostrarKmap;
+    private JButton btnVerInstrucciones;
     private JLabel etiquetaAutor;
     private List<Integer> listaMiniterminos = new ArrayList<>();
 
@@ -28,7 +31,7 @@ public class Minterminos {
     public void iniciarInterfaz() {
         ventana = new JFrame("Generador de Función Booleana");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ventana.setSize(650, 450);
+        ventana.setSize(700, 500);
 
         JPanel panelPrincipal = new JPanel(new BorderLayout());
         JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -37,9 +40,21 @@ public class Minterminos {
         comboVariables = new JComboBox<>(new String[]{"3", "4"});
         btnProcesar = new JButton("Procesar");
         btnMostrarKmap = new JButton("Ver K-Map");
+        btnVerInstrucciones = new JButton("Ver Instrucciones");
 
         btnProcesar.addActionListener(e -> procesarArchivo());
         btnMostrarKmap.addActionListener(e -> mostrarKmap());
+        btnVerInstrucciones.addActionListener(e -> {
+            String instrucciones = leerInstruccionesDesdeXML("instrucciones.xml");
+            JTextArea textArea = new JTextArea(instrucciones);
+            textArea.setEditable(false);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new Dimension(400, 250));
+
+            JOptionPane.showMessageDialog(ventana, scrollPane, "Instrucciones", JOptionPane.INFORMATION_MESSAGE);
+        });
 
         panelSuperior.add(new JLabel("Archivo:"));
         panelSuperior.add(campoArchivo);
@@ -47,6 +62,7 @@ public class Minterminos {
         panelSuperior.add(comboVariables);
         panelSuperior.add(btnProcesar);
         panelSuperior.add(btnMostrarKmap);
+        panelSuperior.add(btnVerInstrucciones);
 
         areaResultado = new JTextArea();
         areaResultado.setEditable(false);
@@ -134,6 +150,7 @@ public class Minterminos {
                 {8, 9, 11, 10}
             };
         }
+
         for (int i = 0; i < datosTabla.length; i++) {
             datosTabla[i][0] = filas[i];
             for (int j = 0; j < columnas.length - 1; j++) {
@@ -141,6 +158,7 @@ public class Minterminos {
                 datosTabla[i][j + 1] = listaMiniterminos.contains(valor) ? "1" : "0";
             }
         }
+
         JTable tabla = new JTable(datosTabla, columnas) {
             public Component prepareRenderer(TableCellRenderer renderer, int row, int col) {
                 Component celda = super.prepareRenderer(renderer, row, col);
@@ -163,6 +181,25 @@ public class Minterminos {
         ventanaMapa.add(panelMapa);
 
         ventanaMapa.setVisible(true);
+    }
+
+    private String leerInstruccionesDesdeXML(String archivoXML) {
+        StringBuilder instrucciones = new StringBuilder();
+        try {
+            File archivo = new File(archivoXML);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(archivo);
+            doc.getDocumentElement().normalize();
+
+            NodeList listaPasos = doc.getElementsByTagName("paso");
+            for (int i = 0; i < listaPasos.getLength(); i++) {
+                instrucciones.append(listaPasos.item(i).getTextContent()).append("\n");
+            }
+        } catch (Exception e) {
+            instrucciones.append("Error al leer instrucciones XML: ").append(e.getMessage());
+        }
+        return instrucciones.toString();
     }
 }
 
