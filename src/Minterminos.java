@@ -53,8 +53,6 @@ public class Minterminos {
         btnKMap.addActionListener(e -> mostrarKmap());
         btnInstrucciones.addActionListener(e -> mostrarInstrucciones());
 
-        //panel.add(new JLabel("Archivo:"));
-        //panel.add(campoArchivo);
         panel.add(new JLabel("Variables:"));
         panel.add(comboVariables);
         panel.add(btnProcesar);
